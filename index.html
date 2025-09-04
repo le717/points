@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Points Keeper</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Karla:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body class="karla">
+  <header>
+    <button type="button" class="player-add">Add Player</button>
+    <h1>Points Keeper</h1>
+    <button type="button" class="reset">Reset</button>
+  </header>
+
+  <main>
+    <section class="player" data-player-id="1">
+      <input type="text" name="player-1-name" id="player-1-name" placeholder="John">
+      <div class="controls">
+        <button type="button" class="point-down">&mdash;</button>
+        <span class="points">0</span>
+        <button type="button" class="point-up">+</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="js/script.js"></script>
+</body>
+</html>
