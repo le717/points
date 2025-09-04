@@ -3,6 +3,7 @@
  */
 const GAME_STATE = {
   "player-1": {
+    id: 1,
     name: "",
     points: 0
   }
@@ -55,6 +56,7 @@ export function setPlayerName(player, name) {
 export function addPlayer() {
   let newId = getNextPlayerId();
   GAME_STATE[`player-${newId}`] = {
+    id: newId,
     name: "",
     points: 0
   };
@@ -73,6 +75,7 @@ export function resetGame() {
 
   // Restore player 1's default info
   GAME_STATE["player-1"] = {
+    id: 1,
     name: "",
     points: 0
   };
@@ -99,14 +102,22 @@ export function loadGame() {
 
 /**
  * Resolve the next player ID.
- * @returns {String}
+ * @returns {Number}
  */
 function getNextPlayerId() {
-  return (Math.max(...[...Object.keys(GAME_STATE)].map(function(key) {
-    return Number.parseInt(key.split("-")[1], 10);
-  })) + 1).toString();
+  let playerIds = [];
+  for (const obj of Object.values(GAME_STATE)) {
+    playerIds.push(obj.id);
+  }
+  return (Math.max(...playerIds) + 1);
 }
 
 export function getCurrentState() {
-  return [...Object.values(GAME_STATE)]
+  let s = [...Object.values(GAME_STATE)];
+  s.sort(function(a, b) {
+    let r = 0;
+    r = a.id > b.id ? 1 : -1;
+    return r;
+  });
+  return s;
 }
