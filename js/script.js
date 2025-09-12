@@ -1,82 +1,75 @@
-import { addPlayer, resetGame, loadGame, decreasePoints, increasePoints, setPlayerName, getCurrentState } from "./state.js";
+import { Game, Player } from "./state.js";
 import { findParent } from "./find-parent.js";
 
-
 let qMain = document.querySelector("main");
+const game = new Game();
 
-
-async function createPlayerControls(playerId) {
-  let html = await fetch("partials/player.html").then(r => r.text());
-  html = html.replace(/{{ id }}/gi, playerId);
+async function createPlayerControls(player) {
+  let html = await fetch("partials/player.html").then((r) => r.text());
+  html = html.replace(/{{ id }}/gi, player.id);
   qMain?.insertAdjacentHTML("beforeend", html);
 }
 
-function registerPlayerNameChange(player) {
-  player.querySelector("input").addEventListener("blur", function(ev) {
-    setPlayerName(player.dataset.playerId, ev.target.value.trim());
+function registerPlayerNameChange(qPlayer, player) {
+  qPlayer.querySelector("input").addEventListener("blur", function (ev) {
+    player.name = ev.target.value.trim();
+    game.save();
   });
 }
 
 /**
- * Load an existing stored game upon page load.
+ * Start a new game, or load an existing game, upon page load.
  */
-document.addEventListener("DOMContentLoaded", async function() {
-  // Go ahead and allow the first player's name to be persisted
-  let player = qMain?.querySelector(".player:first-of-type");
-  registerPlayerNameChange(player);
-
+document.addEventListener("DOMContentLoaded", async function () {
   // Load the game state and board
-  loadGame();
-  getCurrentState().forEach(async function(data, index) {
-    index += 1;
-    let player = qMain?.querySelector(`.player[data-player-id="${index}"]`);
+  game.load();
 
-    // If this player's controls are not in the board yet (which it will not be),
-    // add them first
-    if (player === null) {
-      await createPlayerControls(index);
-      player = qMain?.querySelector(`.player[data-player-id="${index}"]`);
-      registerPlayerNameChange(player);
-    }
+  // If there's no players yet, invisibly add one to the game state
+  if (Object.keys(game.players).length === 0) {
+    game.addPlayer();
+  }
 
-    // Stet the player's info
-    player.querySelector("input").value = data.name;
-    player.querySelector(".points").textContent = data.points;
-  });
+  for (const player of Object.values(game.players)) {
+    // Add all of the player's controls to the board and allow their name to be persisted
+    await createPlayerControls(player);
+    let qPlayer = qMain?.querySelector(
+      `.player[data-player-id="${player.id}"]`
+    );
+    registerPlayerNameChange(qPlayer, player);
+
+    // Set the player's info
+    qPlayer.querySelector("input").value = player.name;
+    qPlayer.querySelector(".points").textContent = player.points;
+  }
 });
 
 /**
  * Add a new player to the game.
  */
-document.querySelector("button.player-add")?.addEventListener("click", async function () {
-  await createPlayerControls(addPlayer());
-
-  // Once the player is added, allow their name to be persisted
-  let player = qMain?.querySelector(".player:last-of-type");
-  registerPlayerNameChange(player);
-});
-
+document
+  .querySelector("button.player-add")
+  ?.addEventListener("click", async function () {
+    let player = game.addPlayer();
+    await createPlayerControls(player);
+    let qPlayer = qMain?.querySelector(
+      `.player[data-player-id="${player.id}"]`
+    );
+    registerPlayerNameChange(qPlayer, player);
+  });
 
 /**
  * Reset the game and all players.
  */
-document.querySelector("button.reset")?.addEventListener("click", async function () {
-  // Reset the stored game state
-  resetGame();
+document
+  .querySelector("button.reset")
+  ?.addEventListener("click", async function () {
+    // Reset the stored game state
+    game.reset();
 
-  qMain?.querySelectorAll(".player").forEach(function(ele, index) {
-      // If this is player 1, reset the points and player name
-    if (ele.dataset.playerId === "1") {
-      ele.querySelector(".points").textContent = "0";
-      ele.querySelector("input").value = "";
-
-    // All other players, remove them completely
-    } else {
+    qMain?.querySelectorAll(".player").forEach(function (ele, index) {
       ele.remove();
-    }
+    });
   });
-});
-
 
 /**
  * Increase/decrease points for a player
@@ -87,15 +80,22 @@ qMain?.addEventListener("click", function (ev) {
 
   // Handle points down button
   if (btnPointDown !== null) {
-    let player = findParent(btnPointDown, ".player");
-    player.querySelector(".points").textContent = decreasePoints(player.dataset.playerId);
+    let qPlayer = findParent(btnPointDown, ".player");
+    let p = game.players[qPlayer.dataset.playerId];
+    p.pointDown();
+    game.save();
+    qPlayer.querySelector(".points").textContent = p.points;
     return;
   }
 
   // Handle points up button
   if (btnPointUp !== null) {
-    let player = findParent(btnPointUp, ".player");
-    player.querySelector(".points").textContent = increasePoints(player.dataset.playerId);
+    let qPlayer = findParent(btnPointUp, ".player");
+    console.log(game.players[qPlayer.dataset.playerId]);
+    let p = game.players[qPlayer.dataset.playerId];
+    p.pointUp();
+    game.save();
+    qPlayer.querySelector(".points").textContent = p.points;
     return;
   }
 });

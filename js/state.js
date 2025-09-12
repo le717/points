@@ -1,123 +1,42 @@
-/**
- * Object[str, Object[str, int | str]]
- */
-const GAME_STATE = {
-  "player-1": {
-    id: 1,
-    name: "",
-    points: 0
+export function Player(id, name, points) {
+  this.id = id || crypto.randomUUID();
+  this.name = name || "";
+  this.points = points || 0;
+}
+Player.prototype.pointUp = function () {
+  this.points += 1;
+};
+Player.prototype.pointDown = function () {
+  this.points -= 1;
+
+  // Guard against negative points
+  if (this.points < 0) {
+    this.points = 0;
   }
 };
 
-/**
- * Increase a player's points by 1 point.
- * @param {Number} player
- */
-export function increasePoints(player) {
-  let points = GAME_STATE[`player-${player}`].points;
-  points += 1
-
-  GAME_STATE[`player-${player}`].points = points;
-  save();
-  return points;
+export function Game() {
+  // dict[str, Player]
+  this.players = {};
 }
-
-
-/**
- * Decrease a player's points by 1 point.
- * @param {Number} player
-*/
-export function decreasePoints(player) {
-  let points = GAME_STATE[`player-${player}`].points;
-  points -= 1;
-
-  // Guard against negative points
-  if (points < 0) {
-    points = 0;
-  }
-  GAME_STATE[`player-${player}`].points = points;
-  save();
-  return points;
-}
-
-/**
- * Set a player's name.
- * @param {Number} player
- * @param {String} name
- */
-export function setPlayerName(player, name) {
-  GAME_STATE[`player-${player}`].name = name;
-  save();
-}
-
-/**
- * Add a new player to the game.
- */
-export function addPlayer() {
-  let newId = getNextPlayerId();
-  GAME_STATE[`player-${newId}`] = {
-    id: newId,
-    name: "",
-    points: 0
-  };
-  save();
-  return newId;
-}
-
-/**
- * Reset the game state.
- */
-export function resetGame() {
-  for (const key of Object.keys(GAME_STATE)) {
-    delete GAME_STATE[key]
-  }
-  localStorage.clear();
-
-  // Restore player 1's default info
-  GAME_STATE["player-1"] = {
-    id: 1,
-    name: "",
-    points: 0
-  };
-}
-
-/**
- * Save the game state.
-*/
-function save() {
-  localStorage.setItem("game", JSON.stringify(GAME_STATE));
-}
-
-/**
- * Load a stored game state.
-*/
-export function loadGame() {
+Game.prototype.load = function () {
   let savedState = localStorage.getItem("game");
   if (savedState !== null) {
     for (const [key, value] of Object.entries(JSON.parse(savedState))) {
-      GAME_STATE[key] = value;
+      this.players[key] = new Player(value.id, value.name, value.points);
     }
   }
-}
-
-/**
- * Resolve the next player ID.
- * @returns {Number}
- */
-function getNextPlayerId() {
-  let playerIds = [];
-  for (const obj of Object.values(GAME_STATE)) {
-    playerIds.push(obj.id);
-  }
-  return (Math.max(...playerIds) + 1);
-}
-
-export function getCurrentState() {
-  let s = [...Object.values(GAME_STATE)];
-  s.sort(function(a, b) {
-    let r = 0;
-    r = a.id > b.id ? 1 : -1;
-    return r;
-  });
-  return s;
-}
+};
+Game.prototype.reset = function () {
+  this.players = {};
+  localStorage.clear();
+};
+Game.prototype.save = function () {
+  localStorage.setItem("game", JSON.stringify(this.players));
+};
+Game.prototype.addPlayer = function () {
+  let p = new Player();
+  this.players[p.id] = p;
+  this.save();
+  return p;
+};
