@@ -99,6 +99,9 @@ input {
   font-size: 1.25rem;
   border: 1px solid gray;
   border-radius: 3px;
+
+  /* TODO: Maybe this helps fix the random zooming? Test it out */
+  /* pointer-events: none; */
 }
 
 section .controls {
